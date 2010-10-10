@@ -24,19 +24,19 @@
 #include <stdlib.h>
 
 #define PROG_NAME       "encodings"
-#define PROG_SHORT_DESC "debugging tool for string output converted to arbitrary encodings"
+#define PROG_SHORT_DESC "string output converted to arbitrary encodings"
 #define PROG_BUILD_DATE "2010-10-10"
 #define PROG_VERSION    PROG_NAME" v0.1 ("PROG_BUILD_DATE")"
 
 //#define DEBUG_LEVEL (int)(getenv("NSDebugLevel"))
 
-const int ERR_ENCODINGS_LIST_GENERATION_FAILED = -1;
+const int ERR_IN_ENCODINGS_LIST_GENERATION_FAILED = -1;
 const int ERR_OUT_ENCODINGS_LIST_GENERATION_FAILED = -2;
 
 const int ERR_INPUTSTR_MISSING  = 1;
-const int ERR_INVALID_ENCODINGS_LIST = 2;
-const int ERR_INVALID_ENCODINGS_PARAM = 3;
-const int ERR_INVALID_ENCODINGS_RANGE = 4;
+const int ERR_INVALID_IN_ENCODINGS_LIST = 2;
+const int ERR_INVALID_IN_ENCODINGS_PARAM = 3;
+const int ERR_INVALID_IN_ENCODINGS_RANGE = 4;
 const int ERR_INVALID_OUT_ENCODINGS_LIST = 5;
 const int ERR_INVALID_OUT_ENCODINGS_PARAM = 6;
 const int ERR_INVALID_OUT_ENCODINGS_RANGE = 7;
@@ -61,10 +61,10 @@ void printUsage(void) {
     "   Created by André Berg on "PROG_BUILD_DATE".\n"
     "   Copyright 2010 Berg Media. All rights reserved.\n"
     "\n"
-    "   USAGE: "PROG_NAME" [-V] [-h] [-v] [-l] [-e <SPEC>] [-o <SPEC>] string\n"
+    "   USAGE: "PROG_NAME" [-V] [-h] [-v] [-l] [-i <SPEC>] [-o <SPEC>] string\n"
     "\n"
     "       The string is first converted to NSData instances\n"
-    "       using all encodings specified by -e <SPEC>.\n"
+    "       using all encodings specified by -i <SPEC>.\n"
     "       Each NSData instance is then converted to all encodings\n"
     "       specified by -o <SPEC>.\n"
     "\n"
@@ -79,11 +79,11 @@ void printUsage(void) {
     "\n"
     "       For valid numbers look at NSStringEncoding and CFStringEncodingExt.h.\n"
     "\n"
-    "       If -e or -o is not specified a list will be populated by all\n"
+    "       If -i or -o is not specified a list will be populated by all\n"
     "       encodings returned from [NSString availableStringEncodings].\n"
     "\n"
-    "       Warning: if both -e and -o are not specified the output can be\n"
-    "       huge, as each encoding is converted to each encoding!\n"
+    "       Warning: if both -i and -o are not specified the output can be\n"
+    "       huge, as each in encoding is converted to each out encoding!\n"
     "\n"
     "\n"
     "   OPTIONS:\n"
@@ -98,12 +98,12 @@ void printUsage(void) {
     "\n"
     "   ERROR CODES:\n"
     "\n"
-    "      -1   populating the encodings list failed\n"
+    "      -1   populating the in encodings list failed\n"
     "      -2   populating the out encodings list failed\n"
     "       1   input string missing\n"
-    "       2   invalid encodings list\n"
-    "       3   invalid encoding number\n"
-    "       4   invalid encodings range\n"
+    "       2   invalid in encodings list\n"
+    "       3   invalid in encoding number\n"
+    "       4   invalid in encodings range\n"
     "       5   invalid out encodings list\n"
     "       6   invalid out encoding number\n"
     "       7   invalid out encodings range\n"
@@ -190,11 +190,11 @@ int main (int argc, char * const argv[]) {
     
     NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
     
-    NSMutableArray * stringEncodings = [NSMutableArray array];
+    NSMutableArray * inStringEncodings = [NSMutableArray array];
     NSMutableArray * outStringEncodings = [NSMutableArray array];
         
     int c, verbose = 0;
-    BOOL encodings_initialized = NO;
+    BOOL in_encodings_initialized = NO;
     BOOL out_encodings_initialized = NO;
     
     while (1) {
@@ -204,7 +204,7 @@ int main (int argc, char * const argv[]) {
             {"version",       no_argument,       0, 'V'},
             {"verbose",       no_argument,       0, 'v'},
             {"list",          no_argument,       0, 'l'},
-            {"encodings",     required_argument, 0, 'e'},
+            {"inencodings",   required_argument, 0, 'i'},
             {"outencodings",  required_argument, 0, 'o'},
             {0, 0, 0, 0}
         };
@@ -212,7 +212,7 @@ int main (int argc, char * const argv[]) {
         /* getopt_long stores the option index here. */
         int option_index = 0;
         
-        c = getopt_long(argc, argv, "hVvle:o:", long_options, &option_index);
+        c = getopt_long(argc, argv, "hVvli:o:", long_options, &option_index);
         
         /* Detect the end of the options. */
         if (c == -1)
@@ -242,7 +242,7 @@ int main (int argc, char * const argv[]) {
                 fprintf(stdout, "\n%10s: %i\n", "total", count);
                 exit(EXIT_SUCCESS);
                 break;
-            case 'e':;
+            case 'i':;
                 // printf("option -e with value '%s'\n", optarg);
                 NSString * encodingsString = [NSString stringWithUTF8String:optarg];
                 
@@ -250,9 +250,9 @@ int main (int argc, char * const argv[]) {
                     NSArray * comps = [encodingsString componentsSeparatedByString:@","];
                     
                     for (NSString * comp in comps) {
-                        if (!addEncodingToStringEncodings(convertHexStringToIntegerString(comp), stringEncodings)) {
+                        if (!addEncodingToStringEncodings(convertHexStringToIntegerString(comp), inStringEncodings)) {
                             fprintf(stderr, "Error: processing the encodings list failed. (proper format: n,n,n...)\n");
-                            exit(ERR_INVALID_ENCODINGS_LIST);
+                            exit(ERR_INVALID_IN_ENCODINGS_LIST);
                         }
                     }
                 } else if ([encodingsString rangeOfString:@"-"].location != NSNotFound) {
@@ -266,34 +266,34 @@ int main (int argc, char * const argv[]) {
                     
                     if (!min) {
                         fprintf(stderr, "Error: start value of encodings range invalid. (format: n-n)\n");
-                        exit(ERR_INVALID_ENCODINGS_RANGE);
+                        exit(ERR_INVALID_IN_ENCODINGS_RANGE);
                     }
                     if (!max) {
                         fprintf(stderr, "Error: upper limit of encodings range invalid. (format: n-n)\n");
-                        exit(ERR_INVALID_ENCODINGS_RANGE);
+                        exit(ERR_INVALID_IN_ENCODINGS_RANGE);
                     }
                     
                     if (min>max) {
                         fprintf(stderr, "Error: start value of encodings range greater than limit value.\n");
-                        exit(ERR_INVALID_ENCODINGS_RANGE);
+                        exit(ERR_INVALID_IN_ENCODINGS_RANGE);
                     }
                     
                     NSUInteger i;
                     for (i = min; i<=max; i++) {
                         NSString * comp = [NSString stringWithFormat:@"%lu", i];
-                        if (!addEncodingToStringEncodings(convertHexStringToIntegerString(comp), stringEncodings)) {
+                        if (!addEncodingToStringEncodings(convertHexStringToIntegerString(comp), inStringEncodings)) {
                             fprintf(stderr, "Error: processing the encodings range failed. (proper format: n-n)\n");
-                            exit(ERR_INVALID_ENCODINGS_RANGE);
+                            exit(ERR_INVALID_IN_ENCODINGS_RANGE);
                         }
                     }
                 } else {
-                    if (!addEncodingToStringEncodings(convertHexStringToIntegerString(encodingsString), stringEncodings)) {
+                    if (!addEncodingToStringEncodings(convertHexStringToIntegerString(encodingsString), inStringEncodings)) {
                         fprintf(stderr, "Error: processing the encodings parameter failed.\n");
-                        exit(ERR_INVALID_ENCODINGS_PARAM);
+                        exit(ERR_INVALID_IN_ENCODINGS_PARAM);
                     }
                 }
                 
-                encodings_initialized = YES;
+                in_encodings_initialized = YES;
                 break;
                 
             case 'o':
@@ -370,10 +370,10 @@ int main (int argc, char * const argv[]) {
         exit(ERR_INPUTSTR_MISSING);
     }
     
-    if (!encodings_initialized) {
-        if (fillWithAvailableStringEncodings(stringEncodings) <= 0) {
+    if (!in_encodings_initialized) {
+        if (fillWithAvailableStringEncodings(inStringEncodings) <= 0) {
             fprintf(stderr, "Error: populating the encodings table failed.\n");
-            exit(ERR_ENCODINGS_LIST_GENERATION_FAILED); 
+            exit(ERR_IN_ENCODINGS_LIST_GENERATION_FAILED); 
         }
     }
     if (!out_encodings_initialized) {
@@ -382,13 +382,13 @@ int main (int argc, char * const argv[]) {
             exit(ERR_OUT_ENCODINGS_LIST_GENERATION_FAILED); 
         }
     }
-    if (!encodings_initialized && !out_encodings_initialized && verbose) {
-        fprintf(stdout, "Warning: -e and -o parameter missing. Output will cover strings in every encoding, all converted to every encoding!\n");
+    if (!in_encodings_initialized && !out_encodings_initialized && verbose) {
+        fprintf(stdout, "Warning: -i and -o parameter missing. Output will cover strings in every encoding, all converted to every encoding!\n");
     }
     
-    for (NSArray * entry in stringEncodings) {
+    for (NSArray * entry in inStringEncodings) {
         
-        logLine(@"---------- Conversion input to data -----------------");
+        logLine(@"---------- Convert input to data -----------------");
         
         NSString * name = [[entry objectAtIndex:0] retain];
         NSStringEncoding enc = [[entry objectAtIndex:1] unsignedIntegerValue];
@@ -404,7 +404,7 @@ int main (int argc, char * const argv[]) {
             continue;
         }
         
-        logLine(@"---------- Conversion data to string -----------------");
+        logLine(@"---------- Convert data to output -----------------");
         
         for (NSArray * outEntry in outStringEncodings) {
             NSString * outName = [[outEntry objectAtIndex:0] retain];
