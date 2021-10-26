@@ -40,7 +40,7 @@ Usage
     Created by André Berg on 2010-10-10.
     Copyright 2010 Berg Media. All rights reserved.
 
-    USAGE: encodings [-V] [-h] [-v] [-l] [-i <SPEC>] [-o <SPEC>] string
+    USAGE: encodings [-V] [-h] [-v] [-q] [-l] [-i <SPEC>] [-o <SPEC>] string
 
         The string is first converted to NSData instances
         using all encodings specified by -i <SPEC>.
@@ -72,6 +72,8 @@ Usage
 
         -v, -verbose         Output every conversion from data to string
                              even if the result is nil
+
+        -q, -quiet           Output only the converted string
 
         -l, -list            List all available encodings and exit
 
