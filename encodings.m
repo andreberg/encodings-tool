@@ -100,8 +100,8 @@ void printUsage(void) {
     "       -v, -verbose         Output every conversion from data to string\n"
     "                            even if the result is nil\n"
     "\n"
-	"       -q, -quiet           Output only the converted string\n"
-	"\n"
+    "       -q, -quiet           Output only the converted string\n"
+    "\n"
     "       -l, -list            List all available encodings and exit\n"
     "\n"
     "   ERROR CODES:\n"
@@ -211,10 +211,10 @@ int main (int argc, char * const argv[]) {
             {"help",          no_argument,       0, 'h'},
             {"version",       no_argument,       0, 'V'},
             {"verbose",       no_argument,       0, 'v'},
-			{"quiet",         no_argument,       0, 'q'},
+            {"quiet",         no_argument,       0, 'q'},
             {"list",          no_argument,       0, 'l'},
             {"inencodings",   required_argument, 0, 'i'},
-			{"outencodings",  required_argument, 0, 'o'},
+            {"outencodings",  required_argument, 0, 'o'},
             {0, 0, 0, 0}
         };
         
@@ -236,12 +236,12 @@ int main (int argc, char * const argv[]) {
                 printUsage();
                 exit(EXIT_SUCCESS);
                 break;
-			case 'v':
-				verbose = 1;
-				break;
-			case 'q':
-				quiet = 1;
-				break;
+            case 'v':
+                verbose = 1;
+                break;
+            case 'q':
+                quiet = 1;
+                break;
             case 'l':;
                 int count = 0;
                 NSArray * allEncodings = [NSString allAvailableEncodings];
@@ -406,38 +406,38 @@ int main (int argc, char * const argv[]) {
         NSStringEncoding enc = [[entry objectAtIndex:1] unsignedIntegerValue];
         NSData * strAsData = [string dataUsingEncoding:enc];
         
-		if (quiet == 0) {
-			if (strAsData) {
-				 fprintf(stdout, "input string as data using encoding %s = %s\n", [name UTF8String], [[strAsData description] UTF8String]);
-				//if (DEBUG_LEVEL > 0) NSLog(@"input string as data using encoding %@ = %@", name, strAsData);
-			} else {
-				 fprintf(stdout, "input string can't be converted to data using encoding %s\n", [name UTF8String]);
-				//if (DEBUG_LEVEL > 0) NSLog(@"input string can't be converted to data using encoding %@", name);
-				[name release]; name = nil;
-				continue;
-			}
-		}
+        if (quiet == 0) {
+            if (strAsData) {
+                 fprintf(stdout, "input string as data using encoding %s = %s\n", [name UTF8String], [[strAsData description] UTF8String]);
+                //if (DEBUG_LEVEL > 0) NSLog(@"input string as data using encoding %@ = %@", name, strAsData);
+            } else {
+                 fprintf(stdout, "input string can't be converted to data using encoding %s\n", [name UTF8String]);
+                //if (DEBUG_LEVEL > 0) NSLog(@"input string can't be converted to data using encoding %@", name);
+                [name release]; name = nil;
+                continue;
+            }
+        }
         
-		if (quiet == 0) logLine(@"---------- Convert data to output -----------------");
+        if (quiet == 0) logLine(@"---------- Convert data to output -----------------");
         
         for (NSArray * outEntry in outStringEncodings) {
             NSString * outName = [[outEntry objectAtIndex:0] retain];
             enc = [[outEntry objectAtIndex:1] unsignedIntegerValue];
             NSString * dataAsString = [[NSString alloc] initWithData:strAsData encoding:enc];
-			if (quiet == 0) {
-				if (dataAsString || verbose) {
-					 fprintf(stdout, "data as string using encoding %s = %s\n", [outName UTF8String], [dataAsString UTF8String]);
-					//if (DEBUG_LEVEL > 0) NSLog(@"data as string using encoding %@ = %@", outName, dataAsString);
-				}
-			} else {
-				if (dataAsString) {
-					printf("%s", [dataAsString UTF8String]);
-				}
-			}
-			[dataAsString release]; dataAsString = nil;
-			[outName release]; outName = nil;
+            if (quiet == 0) {
+                if (dataAsString || verbose) {
+                     fprintf(stdout, "data as string using encoding %s = %s\n", [outName UTF8String], [dataAsString UTF8String]);
+                    //if (DEBUG_LEVEL > 0) NSLog(@"data as string using encoding %@ = %@", outName, dataAsString);
+                }
+            } else {
+                if (dataAsString) {
+                    printf("%s", [dataAsString UTF8String]);
+                }
+            }
+            [dataAsString release]; dataAsString = nil;
+            [outName release]; outName = nil;
         }
-		[name release]; name = nil;
+        [name release]; name = nil;
     }
     
     [pool drain];
